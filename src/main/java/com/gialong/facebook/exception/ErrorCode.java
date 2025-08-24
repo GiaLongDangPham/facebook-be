@@ -1,0 +1,32 @@
+package com.gialong.facebook.exception;
+
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+public enum ErrorCode {
+
+    UNCATEGORY(9999, "UNCATEGORY", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    USER_EXISTED(400, "User existed", HttpStatus.BAD_REQUEST),
+    USER_NOT_EXISTED(400, "User not existed", HttpStatus.BAD_REQUEST),
+
+    UNAUTHENTICATED(401, "you must login to access this resource", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(403, "you dont have authorities", HttpStatus.FORBIDDEN),
+
+    TOKEN_INVALID(400, "Token invalid", HttpStatus.BAD_REQUEST),
+
+    SIGN_OUT_FAILED(400, "Sign out failed", HttpStatus.BAD_REQUEST),
+    CANNOT_SEND_EMAIL(400, "Cannot send email", HttpStatus.BAD_REQUEST),
+    ;
+
+    private final int code;
+    private final String message;
+    private final HttpStatus httpStatus;
+
+    ErrorCode(int code, String message, HttpStatus httpStatus) {
+        this.code = code;
+        this.message = message;
+        this.httpStatus = httpStatus;
+    }
+}
