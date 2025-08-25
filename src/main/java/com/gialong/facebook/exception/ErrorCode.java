@@ -17,6 +17,8 @@ public enum ErrorCode {
     SIGN_OUT_FAILED(400, "Sign out failed", HttpStatus.BAD_REQUEST),
     CANNOT_SEND_EMAIL(400, "Cannot send email", HttpStatus.BAD_REQUEST),
     POST_NOT_EXISTED(400, "Post not existed", HttpStatus.BAD_REQUEST),
+
+    FILE_NOT_AVAILABLE(400, "File not found", HttpStatus.BAD_REQUEST)
     ;
 
     private final int code;

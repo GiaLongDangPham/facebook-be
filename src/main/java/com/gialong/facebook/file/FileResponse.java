@@ -8,4 +8,5 @@ import lombok.*;
 @AllArgsConstructor
 public class FileResponse {
     private String url;
+    private String type;
 }

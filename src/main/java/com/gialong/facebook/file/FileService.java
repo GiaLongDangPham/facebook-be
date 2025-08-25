@@ -1,6 +1,8 @@
 package com.gialong.facebook.file;
 
 import com.gialong.facebook.auth.AuthService;
+import com.gialong.facebook.exception.AppException;
+import com.gialong.facebook.exception.ErrorCode;
 import com.gialong.facebook.user.User;
 import com.gialong.facebook.user.UserService;
 import com.gialong.facebook.userphoto.UserPhotoService;
@@ -29,8 +31,20 @@ public class FileService {
         this.userPhotoService = userPhotoService;
     }
 
-    public String saveFile(MultipartFile file) {
+    public FileResponse saveFile(MultipartFile file) {
         try {
+            // Lấy content type
+            String contentType = file.getContentType();
+            if (contentType == null) {
+                throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
+            }
+
+            // Chỉ lấy phần chính (image / video)
+            String type = contentType.split("/")[0];
+            if (!type.equals("image") && !type.equals("video")) {
+                throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
+            }
+
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path uploadPath = Paths.get(UPLOAD_DIR);
 
@@ -50,7 +64,7 @@ public class FileService {
             User user = userService.getUserById(userId);
             userPhotoService.savePhoto(user, fileDownloadUri);
 
-            return fileDownloadUri;
+            return new FileResponse(fileDownloadUri, type);
 
         } catch (IOException e) {
             throw new RuntimeException("Lỗi khi lưu file", e);

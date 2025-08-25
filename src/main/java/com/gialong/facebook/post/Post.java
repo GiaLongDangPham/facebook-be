@@ -31,27 +31,33 @@ public class Post extends BaseEntity {
     @JoinColumn(name = "author_id")
     private User author;
 
-    @Column(columnDefinition = "text")
-    private String caption;
-
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private Boolean commentLocked;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostPrivacy privacy; // PUBLIC, FRIENDS, ONLY_ME,...
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean commentLocked = false;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<PostMedia> mediaList = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PostLike> likes = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PostComment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "post")
-    private List<Mention> mentions;
+    private List<Mention> mentions = new ArrayList<>();
 
     @OneToMany(mappedBy = "post")
-    private List<Report> reports;
+    private List<Report> reports = new ArrayList<>();
 
 }
