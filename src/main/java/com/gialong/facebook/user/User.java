@@ -13,6 +13,7 @@ import com.gialong.facebook.postlike.PostLike;
 import com.gialong.facebook.report.Report;
 import com.gialong.facebook.userblock.UserBlock;
 import com.gialong.facebook.userfollow.UserFollow;
+import com.gialong.facebook.userphoto.UserPhoto;
 import com.gialong.facebook.userprofile.UserProfile;
 import jakarta.persistence.*;
 import lombok.*;
@@ -84,6 +85,9 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user")
     private Set<ConversationMember> messageRoomMembers;
 
+    //Photo
+    @OneToMany(mappedBy = "user")
+    private Set<UserPhoto> photos;
     //Post
     @OneToMany(mappedBy = "author")
     private Set<Post> posts;

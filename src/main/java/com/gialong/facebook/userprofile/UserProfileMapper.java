@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public class UserProfileMapper {
     public UserProfileResponse toUserProfileResponse(final UserProfile userProfile) {
         return UserProfileResponse.builder()
+                .userId(userProfile.getUserId())
                 .username(userProfile.getUsername())
                 .fullName(userProfile.getFullName())
                 .avatarUrl(userProfile.getAvatarUrl())
@@ -17,4 +18,5 @@ public class UserProfileMapper {
                 .website(userProfile.getWebsite())
                 .build();
     }
+
 }

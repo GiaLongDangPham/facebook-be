@@ -3,22 +3,18 @@ package com.gialong.facebook.userprofile;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileResponse {
-    private UUID userId;
+@Builder
+public class UserProfileRequest {
     private String username;
-
     private String fullName;
     private String avatarUrl;
     private String coverUrl;
     private String bio;
-
     private String gender;
     private LocalDate dob;
     private String location;
