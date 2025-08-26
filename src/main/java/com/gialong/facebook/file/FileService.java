@@ -34,16 +34,7 @@ public class FileService {
     public FileResponse saveFile(MultipartFile file) {
         try {
             // Lấy content type
-            String contentType = file.getContentType();
-            if (contentType == null) {
-                throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
-            }
-
-            // Chỉ lấy phần chính (image / video)
-            String type = contentType.split("/")[0];
-            if (!type.equals("image") && !type.equals("video")) {
-                throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
-            }
+            String type = getString(file);
 
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path uploadPath = Paths.get(UPLOAD_DIR);
@@ -62,12 +53,38 @@ public class FileService {
 
             UUID userId = authService.getMyInfo();
             User user = userService.getUserById(userId);
-            userPhotoService.savePhoto(user, fileDownloadUri);
+            if(type.equals("image")) userPhotoService.savePhoto(user, fileDownloadUri);
 
             return new FileResponse(fileDownloadUri, type);
 
         } catch (IOException e) {
             throw new RuntimeException("Lỗi khi lưu file", e);
         }
+    }
+
+    private static String getString(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
+        }
+
+        // Chỉ lấy phần chính (image / video)
+        String type = contentType.split("/")[0];
+        if (!type.equals("image") && !type.equals("video")) {
+            throw new AppException(ErrorCode.FILE_NOT_AVAILABLE);
+        }
+
+        // Giới hạn dung lượng (byte)
+        long fileSize = file.getSize(); // byte
+        long maxImageSize = 5 * 1024 * 1024;   // 5MB
+        long maxVideoSize = 200 * 1024 * 1024; // 200MB
+
+        if (type.equals("image") && fileSize > maxImageSize) {
+            throw new AppException(ErrorCode.FILE_TOO_LARGE);
+        }
+        if (type.equals("video") && fileSize > maxVideoSize) {
+            throw new AppException(ErrorCode.FILE_TOO_LARGE);
+        }
+        return type;
     }
 }

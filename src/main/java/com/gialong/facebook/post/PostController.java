@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -31,18 +31,30 @@ public class PostController {
         return ResponseEntity.ok(postService.getPost(postId));
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user/{currentUsername}")
     public ResponseEntity<PageResponse<PostResponse>> getPostsByUser(
-            @PathVariable UUID userId,
+            @PathVariable String currentUsername,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(postService.getPostsByUser(userId, page, size));
+        return ResponseEntity.ok(postService.getPostsByUser(currentUsername, page, size));
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<PageResponse<PostResponse>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(postService.getAllPosts(page, size));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PostResponse> updatePrivacyPost(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> request
+    ) {
+        String privacy = request.get("privacy");
+        return ResponseEntity.ok(postService.updatePost(id, privacy));
     }
 
     @DeleteMapping("/{id}")

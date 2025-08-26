@@ -1,5 +1,6 @@
 package com.gialong.facebook.post;
 
+import com.gialong.facebook.auth.AuthService;
 import com.gialong.facebook.base.PageResponse;
 import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
@@ -8,6 +9,8 @@ import com.gialong.facebook.postmedia.PostMediaResponse;
 import com.gialong.facebook.user.User;
 import com.gialong.facebook.user.UserMapper;
 import com.gialong.facebook.user.UserRepository;
+import com.gialong.facebook.userprofile.UserProfile;
+import com.gialong.facebook.userprofile.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +29,8 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final UserProfileRepository userProfileRepository;
+    private final AuthService authService;
 
     @Transactional
     public PostResponse createPost(UUID userId, PostRequest request) {
@@ -66,9 +71,20 @@ public class PostService {
         return mapToResponse(post);
     }
 
-    public PageResponse<PostResponse> getPostsByUser(UUID userId, int page, int size) {
+    public PageResponse<PostResponse> getPostsByUser(String currentUsername, int page, int size) {
+        UUID currentUserId = authService.getMyInfo();
+        UserProfile profile = userProfileRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Post> posts = postRepository.findByAuthorId(userId, pageable);
+        Page<Post> posts;
+
+        if (currentUserId.equals(profile.getUserId())) {
+            // Chính chủ -> lấy tất cả post
+            posts = postRepository.findByAuthorId(profile.getUserId(), pageable);
+        } else {
+            // Người khác -> bỏ post ONLY_ME
+            posts = postRepository.findByAuthorIdAndPrivacyNot(profile.getUserId(), PostPrivacy.ONLY_ME, pageable);
+        }
 
         List<PostResponse> content = posts.stream()
                 .map(this::mapToResponse)
@@ -85,10 +101,20 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponse> getAllPosts() {
-        return postRepository.findAll().stream()
+    public PageResponse<PostResponse> getAllPosts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Post> posts = postRepository.findAllByPrivacyNot(PostPrivacy.ONLY_ME, pageable);
+        List<PostResponse> content = posts.stream()
                 .map(this::mapToResponse)
                 .toList();
+        return PageResponse.<PostResponse>builder()
+                .content(content)
+                .page(posts.getNumber())
+                .size(posts.getSize())
+                .totalElements(posts.getTotalElements())
+                .totalPages(posts.getTotalPages())
+                .last(posts.isLast())
+                .build();
     }
 
     public void deletePost(UUID id) {
@@ -96,6 +122,14 @@ public class PostService {
             throw new AppException(ErrorCode.POST_NOT_EXISTED);
         }
         postRepository.deleteById(id);
+    }
+
+    public PostResponse updatePost(UUID id, String privacy) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        post.setPrivacy(PostPrivacy.valueOf(privacy));
+        Post updated = postRepository.save(post);
+        return mapToResponse(updated);
     }
 
     private PostResponse mapToResponse(Post post) {
@@ -124,6 +158,7 @@ public class PostService {
                 .updatedAt(post.getUpdatedAt())
                 .build();
     }
+
 
 
 }

@@ -1,5 +1,7 @@
 package com.gialong.facebook.file;
 
+import com.gialong.facebook.exception.AppException;
+import com.gialong.facebook.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -26,49 +28,38 @@ public class FileController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/{filename}")
-    public ResponseEntity<Resource> getFile(@PathVariable String filename,
-                                            @RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
+    @GetMapping("/{filename:.+}")
+    public ResponseEntity<Resource> getFile(@PathVariable String filename) {
 
-        Path filePath = Paths.get("uploads").resolve(filename).normalize();
-        Resource resource = new UrlResource(filePath.toUri());
+        try {
+            Path filePath = Paths.get("uploads").resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
 
-        if (!resource.exists() || !resource.isReadable()) {
-            throw new RuntimeException("File not found or not readable");
-        }
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new RuntimeException("File not found or not readable");
+            }
 
-        // Xác định MIME type
-        MediaType mediaType = MediaTypeFactory.getMediaType(resource)
-                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+            // Xác định MIME type
+            MediaType mediaType = MediaTypeFactory.getMediaType(resource)
+                    .orElse(MediaType.APPLICATION_OCTET_STREAM);
 
-        // Nếu là video và có header Range, trả về partial content để stream
-        if (mediaType.getType().equals("video") && rangeHeader != null && rangeHeader.startsWith("bytes=")) {
             long fileLength = resource.contentLength();
-            long rangeStart = 0;
-            long rangeEnd = fileLength - 1;
 
-            String[] ranges = rangeHeader.substring(6).split("-");
-            rangeStart = Long.parseLong(ranges[0]);
-            if (ranges.length > 1) {
-                rangeEnd = Long.parseLong(ranges[1]);
-            }
-            if (rangeEnd > fileLength - 1) {
-                rangeEnd = fileLength - 1;
+            // Với video -> trả full file luôn
+            if (mediaType.getType().equals("video")) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("video/mp4"))
+                        .contentLength(fileLength)
+                        .body(resource);
             }
 
-            long contentLength = rangeEnd - rangeStart + 1;
-
-            return ResponseEntity.status(206)
-                    .header("Content-Type", mediaType.toString())
-                    .header("Accept-Ranges", "bytes")
-                    .header("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength)
-                    .header("Content-Length", String.valueOf(contentLength))
-                    .body(new UrlResource(filePath.toUri()));
+            // Với ảnh hoặc file khác
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .contentLength(fileLength)
+                    .body(resource);
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_SUPPORTED);
         }
-
-        // Nếu không phải video hoặc không có Range header → trả full file
-        return ResponseEntity.ok()
-                .contentType(mediaType)
-                .body(resource);
     }
 }

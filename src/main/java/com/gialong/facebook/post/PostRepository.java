@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
     Page<Post> findByAuthorId(UUID authorId, Pageable pageable);
+    Page<Post> findByAuthorIdAndPrivacyNot(UUID authorId, PostPrivacy privacy, Pageable pageable);
+    Page<Post> findAllByPrivacyNot(PostPrivacy privacy, Pageable pageable);
 }
