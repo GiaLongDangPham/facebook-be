@@ -6,16 +6,14 @@ import com.gialong.facebook.user.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class TokenService {
-    private static final int MAX_TOKENS = 3;
     @Value("${jwt.expiration}")
     private long expiration;
 
@@ -26,14 +24,6 @@ public class TokenService {
 
     @Transactional
     public void addToken(User user, String accessToken, String refreshToken) {
-        List<Token> userTokens = tokenRepository.findByUserId(user.getId());
-        int tokenCount = userTokens.size();
-        // Số lượng token vượt quá giới hạn, xóa một token cũ
-        if (tokenCount >= MAX_TOKENS) {
-            Token tokenToDelete = userTokens.stream().min(Comparator.comparing(Token::getExpirationDate))
-                    .orElseThrow();
-            tokenRepository.delete(tokenToDelete);
-        }
         // Tạo mới một token cho người dùng
         Token newToken = Token.builder()
                 .user(user)
@@ -42,6 +32,7 @@ public class TokenService {
                 .tokenType("Bearer")
                 .refreshToken(refreshToken)
                 .refreshExpirationDate(LocalDateTime.now().plusSeconds(refreshExpiration))
+                .isRevoked(false)
                 .build();
         tokenRepository.save(newToken);
     }
@@ -50,5 +41,10 @@ public class TokenService {
         Token token = tokenRepository.findByToken(accessToken)
                 .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
         return token.getRefreshToken();
+    }
+
+    @Scheduled(cron = "0 0 * * * *") // giây, phút, giờ, ngày, tháng, thứ
+    public void cleanRevokedTokens() {
+        tokenRepository.deleteByIsRevokedTrueOrExpirationDateBefore(LocalDateTime.now());
     }
 }

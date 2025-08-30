@@ -1,6 +1,7 @@
 package com.gialong.facebook.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestControllerAdvice
+@Slf4j(topic = "GlobalHandlingException")
 public class GlobalHandlingException {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -31,7 +33,7 @@ public class GlobalHandlingException {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(new Date())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error(errors.size() > 1 ? String.valueOf(errors) : errors.get(0))
+                .error(errors.size() > 1 ? String.valueOf(errors) : errors.getFirst())
                 .path(request.getRequestURI())
                 .build();
 
@@ -52,6 +54,7 @@ public class GlobalHandlingException {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception exception, HttpServletRequest request) {
+        log.error(exception.getMessage(), exception);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(new Date())
                 .error(exception.getMessage())

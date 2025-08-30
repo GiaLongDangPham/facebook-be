@@ -33,6 +33,9 @@ public class Token {
     @Column(name = "refresh_expiration_date")
     private LocalDateTime refreshExpirationDate;
 
+    @Column(name = "is_revoked")
+    private boolean isRevoked;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

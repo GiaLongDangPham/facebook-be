@@ -1,17 +1,16 @@
 package com.gialong.facebook.file;
 
-import com.gialong.facebook.exception.AppException;
-import com.gialong.facebook.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,37 +28,69 @@ public class FileController {
     }
 
     @GetMapping("/{filename:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable String filename) {
-
+    public void getFile(
+            @PathVariable String filename,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
         try {
             Path filePath = Paths.get("uploads").resolve(filename).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
+            File file = filePath.toFile();
 
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new RuntimeException("File not found or not readable");
+            if (!file.exists() || !file.canRead()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
 
-            // Xác định MIME type
-            MediaType mediaType = MediaTypeFactory.getMediaType(resource)
-                    .orElse(MediaType.APPLICATION_OCTET_STREAM);
+            String mimeType = Files.probeContentType(filePath);
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+            response.setContentType(mimeType);
 
-            long fileLength = resource.contentLength();
+            long fileLength = file.length();
+            String rangeHeader = request.getHeader("Range");
 
-            // Với video -> trả full file luôn
-            if (mediaType.getType().equals("video")) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType("video/mp4"))
-                        .contentLength(fileLength)
-                        .body(resource);
+            long start = 0;
+            long end = fileLength - 1;
+
+            if (rangeHeader != null) {
+                // Ví dụ: "Range: bytes=1000-"
+                String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+                start = Long.parseLong(ranges[0]);
+                if (ranges.length > 1 && !ranges[1].isEmpty()) {
+                    end = Long.parseLong(ranges[1]);
+                }
+                response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+            } else {
+                response.setStatus(HttpServletResponse.SC_OK);
             }
 
-            // Với ảnh hoặc file khác
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .contentLength(fileLength)
-                    .body(resource);
+            long contentLength = end - start + 1;
+            response.setHeader("Accept-Ranges", "bytes");
+            response.setHeader("Content-Length", String.valueOf(contentLength));
+            response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileLength);
+
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r");
+                 OutputStream os = response.getOutputStream()) {
+
+                raf.seek(start);
+
+                byte[] buffer = new byte[8192];
+                long bytesToRead = contentLength;
+                int len;
+
+                while ((len = raf.read(buffer)) != -1 && bytesToRead > 0) {
+                    if (bytesToRead < len) {
+                        os.write(buffer, 0, (int) bytesToRead);
+                        break;
+                    }
+                    os.write(buffer, 0, len);
+                    bytesToRead -= len;
+                }
+            }
         } catch (Exception e) {
-            throw new AppException(ErrorCode.FILE_TYPE_NOT_SUPPORTED);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

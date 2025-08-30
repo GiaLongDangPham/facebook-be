@@ -9,10 +9,11 @@ import com.gialong.facebook.message.Message;
 import com.gialong.facebook.messagereceipt.MessageReceipt;
 import com.gialong.facebook.post.Post;
 import com.gialong.facebook.postcomment.PostComment;
+import com.gialong.facebook.postcommentlike.PostCommentLike;
 import com.gialong.facebook.postlike.PostLike;
 import com.gialong.facebook.report.Report;
 import com.gialong.facebook.userblock.UserBlock;
-import com.gialong.facebook.userfollow.UserFollow;
+import com.gialong.facebook.userfriend.UserFriend;
 import com.gialong.facebook.userphoto.UserPhoto;
 import com.gialong.facebook.userprofile.UserProfile;
 import jakarta.persistence.*;
@@ -55,12 +56,14 @@ public class User extends BaseEntity implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 
-    //    Follow
-    @OneToMany(mappedBy = "target")
-    private Set<UserFollow> followers;
+    // Friendship
+    // Lời mời kết bạn do mình gửi
+    @OneToMany(mappedBy = "requester")
+    private Set<UserFriend> sentFriendRequests;
 
-    @OneToMany(mappedBy = "actor")
-    private Set<UserFollow> following;
+    // Lời mời kết bạn mà mình nhận
+    @OneToMany(mappedBy = "addressee")
+    private Set<UserFriend> receivedFriendRequests;
 
     //Block
     @OneToMany(mappedBy = "blocker")
@@ -95,6 +98,10 @@ public class User extends BaseEntity implements UserDetails {
     //Post Comment
     @OneToMany(mappedBy = "author")
     private Set<PostComment> postComments;
+
+    //Post Comment Likes
+    @OneToMany(mappedBy = "user")
+    private Set<PostCommentLike> commentLikes;
 
     //Post Like
     @OneToMany(mappedBy = "user")

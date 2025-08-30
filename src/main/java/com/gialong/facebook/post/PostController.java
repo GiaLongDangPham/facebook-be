@@ -26,11 +26,6 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(userId, request));
     }
 
-    @GetMapping("/{postId}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable UUID postId) {
-        return ResponseEntity.ok(postService.getPost(postId));
-    }
-
     @GetMapping("/user/{currentUsername}")
     public ResponseEntity<PageResponse<PostResponse>> getPostsByUser(
             @PathVariable String currentUsername,
@@ -48,18 +43,27 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts(page, size));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/privacy/{id}")
     public ResponseEntity<PostResponse> updatePrivacyPost(
             @PathVariable UUID id,
             @RequestBody Map<String, String> request
     ) {
         String privacy = request.get("privacy");
-        return ResponseEntity.ok(postService.updatePost(id, privacy));
+        return ResponseEntity.ok(postService.updatePrivacyPost(id, privacy));
+    }
+
+    @PutMapping("/comment/{id}")
+    public ResponseEntity<PostResponse> updateCommentBlockPost(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Boolean> request
+    ) {
+        Boolean commentLocked = request.get("commentLocked");
+        return ResponseEntity.ok(postService.updateCommentBlockPost(id, commentLocked));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 }

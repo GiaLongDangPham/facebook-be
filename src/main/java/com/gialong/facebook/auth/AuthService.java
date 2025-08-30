@@ -25,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -89,11 +88,11 @@ public class AuthService {
     @Transactional
     public void logout(LogoutRequest request) {
         String accessToken = request.getAccessToken();
-        Token token = tokenRepository.findByToken(accessToken).orElseThrow(
-                () -> new AppException(ErrorCode.TOKEN_INVALID)
-        );
-        // Delete token
-        tokenRepository.deleteById(token.getId());
+        tokenRepository.findByToken(accessToken).ifPresent(token -> {
+            // set revoke
+            token.setRevoked(true);
+            tokenRepository.save(token);
+        });
 
         long accessTokenExp = jwtService.extractTokenExpired(request.getAccessToken());
         if(accessTokenExp > 0) {
@@ -124,8 +123,9 @@ public class AuthService {
                     throw new AppException(ErrorCode.SIGN_OUT_FAILED);
                 }
             }
-            // Delete token
-            tokenRepository.deleteById(token.getId());
+            // set revoke
+            token.setRevoked(true);
+            tokenRepository.save(token);
         }
     }
 

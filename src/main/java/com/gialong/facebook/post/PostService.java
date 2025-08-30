@@ -4,6 +4,7 @@ import com.gialong.facebook.auth.AuthService;
 import com.gialong.facebook.base.PageResponse;
 import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
+import com.gialong.facebook.postcomment.PostCommentService;
 import com.gialong.facebook.postmedia.PostMedia;
 import com.gialong.facebook.postmedia.PostMediaResponse;
 import com.gialong.facebook.user.User;
@@ -31,6 +32,7 @@ public class PostService {
     private final UserMapper userMapper;
     private final UserProfileRepository userProfileRepository;
     private final AuthService authService;
+    private final PostCommentService postCommentService;
 
     @Transactional
     public PostResponse createPost(UUID userId, PostRequest request) {
@@ -62,13 +64,6 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved);
-    }
-
-    @Transactional(readOnly = true)
-    public PostResponse getPost(UUID postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
-        return mapToResponse(post);
     }
 
     public PageResponse<PostResponse> getPostsByUser(String currentUsername, int page, int size) {
@@ -124,7 +119,7 @@ public class PostService {
         postRepository.deleteById(id);
     }
 
-    public PostResponse updatePost(UUID id, String privacy) {
+    public PostResponse updatePrivacyPost(UUID id, String privacy) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
         post.setPrivacy(PostPrivacy.valueOf(privacy));
@@ -132,7 +127,16 @@ public class PostService {
         return mapToResponse(updated);
     }
 
+    public PostResponse updateCommentBlockPost(UUID id, Boolean commentLocked) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        post.setCommentLocked(commentLocked);
+        Post updated = postRepository.save(post);
+        return mapToResponse(updated);
+    }
+
     private PostResponse mapToResponse(Post post) {
+        long commentCount = postCommentService.countComments(post.getId());
         return PostResponse.builder()
                 .id(post.getId())
                 .author(userMapper.toUserResponse(post.getAuthor()))
@@ -152,8 +156,7 @@ public class PostService {
                                 .thumbnailUrl(m.getThumbnailUrl())
                                 .build())
                         .toList())
-                .likeCount(post.getLikes().size())
-                .commentCount(post.getComments().size())
+                .commentCount(commentCount)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();

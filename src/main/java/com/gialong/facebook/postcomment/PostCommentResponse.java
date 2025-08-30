@@ -1,11 +1,9 @@
-package com.gialong.facebook.post;
+package com.gialong.facebook.postcomment;
 
-import com.gialong.facebook.postmedia.PostMediaResponse;
 import com.gialong.facebook.user.UserResponse;
 import lombok.*;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -13,14 +11,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostResponse {
+public class PostCommentResponse {
     private UUID id;
+    private UUID postId;
     private UserResponse author;
     private String content;
-    private String privacy;
-    private Boolean commentLocked;
-    private List<PostMediaResponse> mediaList;
-    private Long commentCount;
+    private UUID parentId;
+    private Long repliesCount;
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -4,12 +4,14 @@ package com.gialong.facebook.postcomment;
 import com.gialong.facebook.base.BaseEntity;
 import com.gialong.facebook.mention.Mention;
 import com.gialong.facebook.post.Post;
+import com.gialong.facebook.postcommentlike.PostCommentLike;
 import com.gialong.facebook.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -45,4 +47,7 @@ public class PostComment extends BaseEntity {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> replies = new ArrayList<>();
+
+    @OneToMany(mappedBy = "comment")
+    private Set<PostCommentLike> commentLikes;
 }
