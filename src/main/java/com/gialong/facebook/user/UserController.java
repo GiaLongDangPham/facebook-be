@@ -14,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final UserMapper userMapper;
     @GetMapping
     public ResponseEntity<List<UserResponse>> getUsers() {
         return ResponseEntity.ok().body(userService.getAllUsers());
@@ -21,6 +22,7 @@ public class UserController {
 
     @GetMapping("/{username}")
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
-        return ResponseEntity.ok().body(userService.getUserByUsername(username));
+        UserResponse userResponse = userMapper.toUserResponse(userService.getUserByUsername(username));
+        return ResponseEntity.ok().body(userResponse);
     }
 }

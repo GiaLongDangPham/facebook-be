@@ -18,20 +18,20 @@ public class UserProfileService {
     public UserProfileResponse getProfile(String username) {
         return userProfileRepository.findByUsername(username)
                 .map(userProfileMapper::toUserProfileResponse)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
     @Transactional
     public UserProfileResponse updateProfile(UUID userId, UserProfileRequest request) {
         UserProfile profile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         profile.setUsername(request.getUsername());
         profile.setFullName(request.getFullName());
         profile.setAvatarUrl(request.getAvatarUrl());
         profile.setCoverUrl(request.getCoverUrl());
         profile.setBio(request.getBio());
-        profile.setGender(UserGender.valueOf(request.getGender()));
+        profile.setGender(request.getGender() != null ? UserGender.valueOf(request.getGender()) : profile.getGender());
         profile.setDob(request.getDob());
         profile.setLocation(request.getLocation());
         profile.setWebsite(request.getWebsite());

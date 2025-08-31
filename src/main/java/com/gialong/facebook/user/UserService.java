@@ -27,10 +27,9 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    public UserResponse getUserByUsername(String username) {
+    public User getUserByUsername(String username) {
         UserProfile profile = userProfileRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        User user = profile.getUser();
-        return userMapper.toUserResponse(user);
+        return profile.getUser();
     }
 }

@@ -10,6 +10,8 @@ import com.gialong.facebook.postmedia.PostMediaResponse;
 import com.gialong.facebook.user.User;
 import com.gialong.facebook.user.UserMapper;
 import com.gialong.facebook.user.UserRepository;
+import com.gialong.facebook.user.UserService;
+import com.gialong.facebook.userfriend.UserFriendRepository;
 import com.gialong.facebook.userprofile.UserProfile;
 import com.gialong.facebook.userprofile.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +36,7 @@ public class PostService {
     private final UserProfileRepository userProfileRepository;
     private final AuthService authService;
     private final PostCommentService postCommentService;
+    private final UserFriendRepository userFriendRepository;
 
     @Transactional
     public PostResponse createPost(UUID userId, PostRequest request) {
@@ -96,9 +100,19 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PostResponse> getAllPosts(int page, int size) {
+    public PageResponse<PostResponse> getAllPosts(UUID currentUserId, int page, int size) {
+        // Lấy danh sách bạn bè đã accepted
+        List<UUID> friendIds = new ArrayList<>(userFriendRepository.findAllFriends(currentUserId));
+
+        // Thêm chính mình vào danh sách
+        friendIds.add(currentUserId);
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Post> posts = postRepository.findAllByPrivacyNot(PostPrivacy.ONLY_ME, pageable);
+
+        // Lấy post của mình + bạn bè (không phải ONLY_ME)
+        Page<Post> posts = postRepository.findByAuthorIdInAndPrivacyNot(friendIds, PostPrivacy.ONLY_ME, pageable);
+//        Page<Post> posts = postRepository.findAllByPrivacyNot(PostPrivacy.ONLY_ME, pageable);
+
         List<PostResponse> content = posts.stream()
                 .map(this::mapToResponse)
                 .toList();

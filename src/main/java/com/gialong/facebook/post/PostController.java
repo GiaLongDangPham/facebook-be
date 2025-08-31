@@ -40,7 +40,8 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(postService.getAllPosts(page, size));
+        UUID currentUserId = authService.getMyInfo();
+        return ResponseEntity.ok(postService.getAllPosts(currentUserId, page, size));
     }
 
     @PutMapping("/privacy/{id}")
