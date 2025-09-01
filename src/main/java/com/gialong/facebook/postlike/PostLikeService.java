@@ -2,6 +2,7 @@ package com.gialong.facebook.postlike;
 
 import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
+import com.gialong.facebook.notification.NotificationService;
 import com.gialong.facebook.post.Post;
 import com.gialong.facebook.post.PostRepository;
 import com.gialong.facebook.user.User;
@@ -18,6 +19,7 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public boolean toggleLike(UUID postId, UUID userId) {
         Post post = postRepository.findById(postId)
@@ -36,6 +38,10 @@ public class PostLikeService {
                     .user(user)
                     .build();
             postLikeRepository.save(like); // like
+
+            // gửi noti cho chủ post
+            UUID recipientId = post.getAuthor().getId();
+            notificationService.sendLikePostNotification(recipientId, userId, postId);
             return true;
         }
     }

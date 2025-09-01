@@ -10,7 +10,6 @@ import com.gialong.facebook.postmedia.PostMediaResponse;
 import com.gialong.facebook.user.User;
 import com.gialong.facebook.user.UserMapper;
 import com.gialong.facebook.user.UserRepository;
-import com.gialong.facebook.user.UserService;
 import com.gialong.facebook.userfriend.UserFriendRepository;
 import com.gialong.facebook.userprofile.UserProfile;
 import com.gialong.facebook.userprofile.UserProfileRepository;
@@ -99,6 +98,12 @@ public class PostService {
                 .build();
     }
 
+    public PostResponse getPostById(UUID id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        return mapToResponse(post);
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<PostResponse> getAllPosts(UUID currentUserId, int page, int size) {
         // Lấy danh sách bạn bè đã accepted
@@ -175,7 +180,4 @@ public class PostService {
                 .updatedAt(post.getUpdatedAt())
                 .build();
     }
-
-
-
 }

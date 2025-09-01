@@ -3,6 +3,7 @@ package com.gialong.facebook.post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 //    Page<Post> findAllByPrivacyNot(PostPrivacy privacy, Pageable pageable);
 
     Page<Post> findByAuthorIdInAndPrivacyNot(List<UUID> authorIds, PostPrivacy privacy, Pageable pageable);
+
+    @Query(value = "SELECT p.content FROM Post p WHERE p.id = :id")
+    String getContentById(UUID id);
 }

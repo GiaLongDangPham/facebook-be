@@ -35,6 +35,11 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostsByUser(currentUsername, page, size));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PostResponse> getPostById(@PathVariable UUID id) {
+        return ResponseEntity.ok(postService.getPostById(id));
+    }
+
     @GetMapping
     public ResponseEntity<PageResponse<PostResponse>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
