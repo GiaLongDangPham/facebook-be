@@ -3,6 +3,8 @@ package com.gialong.facebook.userfriend;
 import com.gialong.facebook.base.PageResponse;
 import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
+import com.gialong.facebook.notification.ActionEnum;
+import com.gialong.facebook.notification.NotificationService;
 import com.gialong.facebook.user.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,7 @@ public class UserFriendService {
     private final UserFriendRepository userFriendRepository;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     // Gửi lời mời kết bạn
     public UserFriendResponse sendFriendRequest(UUID currentUserId, UUID addresseeId) {
@@ -34,6 +37,8 @@ public class UserFriendService {
                 .addressee(addressee)
                 .status(FriendshipStatus.PENDING)
                 .build();
+
+        notificationService.sendNotification(addressee, currentUser, null, null, ActionEnum.ADD_FRIEND);
 
         return this.toResponse(userFriendRepository.save(friendship), currentUser, FriendshipStatus.PENDING);
     }
@@ -49,6 +54,8 @@ public class UserFriendService {
                 .orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_FRIENDS));
 
         friendship.setStatus(FriendshipStatus.ACCEPTED);
+
+        notificationService.sendNotification(requester, currentUser, null, null, ActionEnum.ACCEPT_FRIEND);
         return this.toResponse(userFriendRepository.save(friendship), currentUser, FriendshipStatus.ACCEPTED);
     }
 

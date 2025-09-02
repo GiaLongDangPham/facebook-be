@@ -21,19 +21,23 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     @Query("SELECT n FROM Notification n " +
             "WHERE n.targetId = :targetId " +
-            "AND n.actionType = :actionType"
+            "AND n.actionType = :actionType" +
+            " AND n.recipient.id = :recipient"
     )
-    Optional<Notification> findByTargetIdAndActionType(
+    Optional<Notification> findByTargetIdAndActionTypeAndRecipient(
             @Param("targetId") UUID targetId,
-            @Param("actionType") ActionEnum actionType
+            @Param("actionType") ActionEnum actionType,
+            @Param("recipient") UUID recipientId
     );
 
     @Modifying
     @Query("UPDATE Notification n " +
             "SET n.state = :newState " +
             "WHERE n.targetId = :targetId  " +
+            "AND n.recipient.id = :recipientId " +
             "AND n.actionType = :actionType")
-    void updateNotificationState(@Param("targetId") UUID targetId, @Param("actionType") ActionEnum actionType, @Param("newState") StateEnum newState);
+    void updateNotificationState(@Param("targetId") UUID targetId, @Param("actionType") ActionEnum actionType,
+                                 @Param("recipientId") UUID recipientId, @Param("newState") StateEnum newState);
 
 
     @Modifying

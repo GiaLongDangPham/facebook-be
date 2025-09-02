@@ -8,22 +8,29 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notifications")
-@IdClass(PkNotification.class)
+@Table(
+    name = "notifications",
+    uniqueConstraints = {
+        @UniqueConstraint(
+                columnNames = {"target_id", "action_type", "recipient_id"}
+        )
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Notification extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     /**
      * The entity (post or user) that the action was performed on. Example: when a user comments on a post,
      * the targetId will be the id of the post.
      */
-    @Id
     private UUID targetId;
 
-    @Id
     @Enumerated(EnumType.STRING)
     private ActionEnum actionType;
 

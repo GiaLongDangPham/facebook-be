@@ -20,32 +20,45 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final SimpMessagingTemplate messagingTemplate;
-    private final UserService userService;
 
-    public void sendLikePostNotification(UUID recipientId, UUID senderId, UUID postId) {
-        Optional<Notification> existing = notificationRepository
-                .findByTargetIdAndActionType(postId, ActionEnum.LIKE_POST);
-        User recipient = userService.getUserById(recipientId);
-        User actor = userService.getUserById(senderId);
-        Notification notification;
-        if (existing.isPresent()) {
-            notification = existing.get();
-            notification.setState(StateEnum.UNSEEN);
-            notification.setActor(actor);
-            notification.setUpdatedAt(Instant.now());
-        } else {
-            notification = Notification.builder()
-                    .targetId(postId)
-                    .actionType(ActionEnum.LIKE_POST)
-                    .state(StateEnum.UNSEEN)
-                    .redirectURL("/user/posts/" + postId)
-                    .recipient(recipient)
-                    .actor(actor)
-                    .build();
+    public void sendNotification(User recipient, User sender, UUID postId, UUID commentId, ActionEnum actionEnum) {
+        Notification notification = Notification.builder()
+                .actor(sender)
+                .recipient(recipient)
+                .state(StateEnum.UNSEEN)
+                .build();
+        switch (actionEnum) {
+            case LIKE_POST -> {
+                notification.setTargetId(postId);
+                notification.setActionType(ActionEnum.LIKE_POST);
+                notification.setRedirectURL("/user/posts/" + postId);
+            }
+            case COMMENT_POST -> {
+                notification.setTargetId(postId);
+                notification.setActionType(ActionEnum.COMMENT_POST);
+                notification.setActionPerformedId(commentId);
+                notification.setRedirectURL("/user/posts/" + postId);
+            }
+            case ADD_FRIEND -> {
+                notification.setTargetId(sender.getId());
+                notification.setActionType(ActionEnum.ADD_FRIEND);
+                notification.setRedirectURL("/user/friends/requests");
+            }
+            case ACCEPT_FRIEND -> {
+                notification.setTargetId(sender.getId());
+                notification.setActionType(ActionEnum.ACCEPT_FRIEND);
+                notification.setRedirectURL("/user/profile/" + sender.getProfile().getUsername());
+
+                Notification addFriendNotification = notificationRepository
+                        .findByTargetIdAndActionTypeAndRecipient(recipient.getId(), ActionEnum.ADD_FRIEND, sender.getId())
+                        .orElseThrow();
+                notificationRepository.delete(addFriendNotification);
+            }
         }
+
         NotificationResponse response = notificationMapper.toResponse(notificationRepository.save(notification));
         // convertAndSend đến user nhận
-        messagingTemplate.convertAndSend("/topic/notification/" + recipientId, response);
+        messagingTemplate.convertAndSend("/topic/notification/" + recipient.getId(), response);
     }
 
     public List<NotificationResponse> getNotifications(UUID recipientId) {
@@ -60,12 +73,16 @@ public class NotificationService {
     }
 
     @Transactional
-    public void updateNotificationState (UUID targetId, ActionEnum actionType, StateEnum newState) {
-        notificationRepository.updateNotificationState(targetId, actionType, newState);
+    public void updateNotificationState (UUID targetId, ActionEnum actionType, UUID recipientId, StateEnum newState) {
+        notificationRepository.updateNotificationState(targetId, actionType, recipientId, newState);
     }
 
     @Transactional
     public void markAllSeen(UUID userId) {
         notificationRepository.markAllSeen(userId, StateEnum.SEEN, StateEnum.UNSEEN);
+    }
+
+    public void deleteNotification(UUID notificationId) {
+        notificationRepository.deleteById(notificationId);
     }
 }

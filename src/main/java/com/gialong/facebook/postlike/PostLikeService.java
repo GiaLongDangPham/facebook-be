@@ -2,6 +2,7 @@ package com.gialong.facebook.postlike;
 
 import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
+import com.gialong.facebook.notification.ActionEnum;
 import com.gialong.facebook.notification.NotificationService;
 import com.gialong.facebook.post.Post;
 import com.gialong.facebook.post.PostRepository;
@@ -40,8 +41,9 @@ public class PostLikeService {
             postLikeRepository.save(like); // like
 
             // gửi noti cho chủ post
-            UUID recipientId = post.getAuthor().getId();
-            notificationService.sendLikePostNotification(recipientId, userId, postId);
+            if (userId != post.getAuthor().getId()) {
+                notificationService.sendNotification(post.getAuthor(), user, postId, null, ActionEnum.LIKE_POST);
+            }
             return true;
         }
     }

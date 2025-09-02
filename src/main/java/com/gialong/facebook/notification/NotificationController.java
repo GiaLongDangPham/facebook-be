@@ -31,9 +31,10 @@ public class NotificationController {
     public ResponseEntity<Void> updateNotificationState(
             @RequestParam UUID targetId,
             @RequestParam ActionEnum actionType,
+            @RequestParam UUID recipientId,
             @RequestParam StateEnum newState
     ) {
-        notificationService.updateNotificationState(targetId, actionType, newState);
+        notificationService.updateNotificationState(targetId, actionType, recipientId, newState);
         return ResponseEntity.ok().build();
     }
 
@@ -44,4 +45,8 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{notificationId}")
+    public void deleteNotification(@PathVariable UUID notificationId) {
+        notificationService.deleteNotification(notificationId);
+    }
 }

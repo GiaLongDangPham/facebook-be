@@ -5,6 +5,8 @@ import com.gialong.facebook.exception.AppException;
 import com.gialong.facebook.exception.ErrorCode;
 import com.gialong.facebook.mention.Mention;
 import com.gialong.facebook.mention.MentionRepository;
+import com.gialong.facebook.notification.ActionEnum;
+import com.gialong.facebook.notification.NotificationService;
 import com.gialong.facebook.post.Post;
 import com.gialong.facebook.post.PostRepository;
 import com.gialong.facebook.user.User;
@@ -31,6 +33,7 @@ public class PostCommentService {
     private final UserService userService;
     private final UserMapper userMapper;
     private final MentionRepository mentionRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public PostCommentResponse addComment(
@@ -52,6 +55,11 @@ public class PostCommentService {
             comment.setParent(parent);
         }
         commentRepository.save(comment);
+
+        // Gửi notification tới chủ post
+        if (post.getAuthor().getId() != authorId) {
+            notificationService.sendNotification(post.getAuthor(), author, postId, comment.getId(), ActionEnum.COMMENT_POST);
+        }
 
         // Handle mentions
         if (mentionedUserIds != null && !mentionedUserIds.isEmpty()) {
@@ -76,7 +84,7 @@ public class PostCommentService {
         return commentRepository.countByPostId(postId);
     }
 
-    public PageResponse<PostCommentResponse> getComments(UUID postId, int page, int size) {
+    public PageResponse<PostCommentResponse> getCommentsByPost(UUID postId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<PostComment> comments = commentRepository.findByPostIdAndParentIsNull(postId, pageable);
 
@@ -112,6 +120,12 @@ public class PostCommentService {
                 .build();
     }
 
+    public PostCommentResponse getCommentById(UUID id) {
+        PostComment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_EXISTED));
+        return toResponse(comment);
+    }
+
     private PostCommentResponse toResponse(PostComment comment) {
         User user = userService.getUserById(comment.getAuthor().getId());
         return PostCommentResponse.builder()
@@ -125,6 +139,7 @@ public class PostCommentService {
                 .updatedAt(comment.getUpdatedAt())
                 .build();
     }
+
 
 
 }
