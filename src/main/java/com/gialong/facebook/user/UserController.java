@@ -2,10 +2,10 @@ package com.gialong.facebook.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +24,24 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         UserResponse userResponse = userMapper.toUserResponse(userService.getUserByUsername(username));
         return ResponseEntity.ok().body(userResponse);
+    }
+
+    @MessageMapping("/user/connect") // Receives message from clients sending to /app/user/connect
+    @SendTo("/topic/active") // Send the response to all clients subscribe to /topic/active
+    public List<UserResponse> connect(@Payload UserResponse userResponse) {
+        userService.setUserOnline(userResponse);
+        return userService.getOnlineUsers();
+    }
+
+    @MessageMapping("/user/disconnect")
+    @SendTo("/topic/active")
+    public List<UserResponse> disconnect(@Payload UserResponse userResponse) {
+        userService.setUserOffline(userResponse.getId());
+        return userService.getOnlineUsers();
+    }
+
+    @GetMapping("/online")
+    public ResponseEntity<List<UserResponse>> getOnlineUsers() {
+        return ResponseEntity.ok().body(userService.getOnlineUsers());
     }
 }

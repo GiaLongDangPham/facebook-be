@@ -19,6 +19,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .status(user.getStatus().name())
                 .role(user.getRole().name())
+                .lastOffline(user.getLastOffline())
                 .profile(profileResponse)
                 .build();
     }

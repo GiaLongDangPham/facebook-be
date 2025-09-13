@@ -3,6 +3,7 @@ package com.gialong.facebook.userprofile;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UserProfileRequest {
+    private UUID userId;
     private String username;
     private String fullName;
     private String avatarUrl;

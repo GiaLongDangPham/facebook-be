@@ -54,8 +54,9 @@ public class UserFriendService {
                 .orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_FRIENDS));
 
         friendship.setStatus(FriendshipStatus.ACCEPTED);
-
+        // Gửi noti
         notificationService.sendNotification(requester, currentUser, null, null, ActionEnum.ACCEPT_FRIEND);
+
         return this.toResponse(userFriendRepository.save(friendship), currentUser, FriendshipStatus.ACCEPTED);
     }
 

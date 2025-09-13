@@ -1,6 +1,5 @@
 package com.gialong.facebook.notification;
 
-import com.gialong.facebook.post.PostRepository;
 import com.gialong.facebook.postcomment.PostCommentRepository;
 import com.gialong.facebook.postlike.PostLikeRepository;
 import com.gialong.facebook.user.UserMapper;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 public class NotificationMapper {
 
-    private final PostRepository postRepository;
     private final PostCommentRepository commentRepository;
     private final PostLikeRepository likeRepository;
     private final UserMapper userMapper;

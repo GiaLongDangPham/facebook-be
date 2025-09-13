@@ -2,11 +2,10 @@ package com.gialong.facebook.user;
 
 import com.gialong.facebook.auth.token.Token;
 import com.gialong.facebook.base.BaseEntity;
-import com.gialong.facebook.conversation.Conversation;
-import com.gialong.facebook.conversationmember.ConversationMember;
 import com.gialong.facebook.mention.Mention;
-import com.gialong.facebook.message.Message;
-import com.gialong.facebook.messagereceipt.MessageReceipt;
+import com.gialong.facebook.messagecontent.MessageContent;
+import com.gialong.facebook.messageroom.MessageRoom;
+import com.gialong.facebook.messageroommember.MessageRoomMember;
 import com.gialong.facebook.post.Post;
 import com.gialong.facebook.postcomment.PostComment;
 import com.gialong.facebook.postcommentlike.PostCommentLike;
@@ -18,6 +17,7 @@ import com.gialong.facebook.userphoto.UserPhoto;
 import com.gialong.facebook.userprofile.UserProfile;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.usertype.UserType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,6 +49,9 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
+    // last offline
+    private Long lastOffline;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -73,20 +76,16 @@ public class User extends BaseEntity implements UserDetails {
     private Set<UserBlock> blockedUsers;
 
     // Message
-    @OneToMany(mappedBy = "sender")
-    private Set<Message> messages;
-
-    //Message Receipt
     @OneToMany(mappedBy = "user")
-    private Set<MessageReceipt> messageReceipts;
+    private Set<MessageContent> messageContents;
 
-    //Conversation
+    // MessageRoom
     @OneToMany(mappedBy = "createdBy")
-    private Set<Conversation> conversations;
+    private Set<MessageRoom> messageRooms;
 
-    // ConversationMember
+    // MessageRoomMember
     @OneToMany(mappedBy = "user")
-    private Set<ConversationMember> messageRoomMembers;
+    private Set<MessageRoomMember> messageRoomMembers;
 
     //Photo
     @OneToMany(mappedBy = "user")

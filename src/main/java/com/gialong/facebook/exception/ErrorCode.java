@@ -19,6 +19,8 @@ public enum ErrorCode {
     POST_NOT_EXISTED(400, "Post not existed", HttpStatus.BAD_REQUEST),
     COMMENT_NOT_EXISTED(400, "Comment not existed", HttpStatus.BAD_REQUEST),
     YOU_ARE_NOT_FRIENDS(400, "You are not friends", HttpStatus.BAD_REQUEST),
+    CONVERSATION_NOT_FOUND(400, "Conversation not found", HttpStatus.BAD_REQUEST),
+    CONVERSATION_EXISTED(400, "Conversation existed", HttpStatus.BAD_REQUEST),
 
     FILE_NOT_AVAILABLE(400, "File not found", HttpStatus.BAD_REQUEST),
     FILE_TYPE_NOT_SUPPORTED(400, "File type not supported", HttpStatus.BAD_REQUEST),

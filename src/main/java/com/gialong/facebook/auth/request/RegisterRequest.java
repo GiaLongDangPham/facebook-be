@@ -17,4 +17,7 @@ public class RegisterRequest {
 
     @NotBlank
     private String username; // cho UserProfile
+
+    @NotBlank
+    private String fullName; // cho UserProfile
 }

@@ -1,7 +1,6 @@
 package com.gialong.facebook.notification;
 
 import com.gialong.facebook.user.User;
-import com.gialong.facebook.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -22,37 +21,51 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendNotification(User recipient, User sender, UUID postId, UUID commentId, ActionEnum actionEnum) {
-        Notification notification = Notification.builder()
-                .actor(sender)
-                .recipient(recipient)
-                .state(StateEnum.UNSEEN)
-                .build();
-        switch (actionEnum) {
-            case LIKE_POST -> {
-                notification.setTargetId(postId);
-                notification.setActionType(ActionEnum.LIKE_POST);
-                notification.setRedirectURL("/user/posts/" + postId);
-            }
-            case COMMENT_POST -> {
-                notification.setTargetId(postId);
-                notification.setActionType(ActionEnum.COMMENT_POST);
-                notification.setActionPerformedId(commentId);
-                notification.setRedirectURL("/user/posts/" + postId);
-            }
-            case ADD_FRIEND -> {
-                notification.setTargetId(sender.getId());
-                notification.setActionType(ActionEnum.ADD_FRIEND);
-                notification.setRedirectURL("/user/friends/requests");
-            }
-            case ACCEPT_FRIEND -> {
-                notification.setTargetId(sender.getId());
-                notification.setActionType(ActionEnum.ACCEPT_FRIEND);
-                notification.setRedirectURL("/user/profile/" + sender.getProfile().getUsername());
+        Optional<Notification> optionalNotification = notificationRepository
+                .findByTargetIdAndActionTypeAndRecipient(sender.getId(), actionEnum, recipient.getId());
 
-                Notification addFriendNotification = notificationRepository
+        Notification notification;
+        if(optionalNotification.isPresent()) {
+            notification = optionalNotification.get();
+            notification.setState(StateEnum.UNSEEN);
+            if(notification.getActionType() == ActionEnum.ACCEPT_FRIEND){
+                notificationRepository
                         .findByTargetIdAndActionTypeAndRecipient(recipient.getId(), ActionEnum.ADD_FRIEND, sender.getId())
-                        .orElseThrow();
-                notificationRepository.delete(addFriendNotification);
+                        .ifPresent(notificationRepository::delete);
+            }
+        }
+        else {
+            notification = Notification.builder()
+                    .actor(sender)
+                    .recipient(recipient)
+                    .state(StateEnum.UNSEEN)
+                    .build();
+            switch (actionEnum) {
+                case LIKE_POST -> {
+                    notification.setTargetId(postId);
+                    notification.setActionType(ActionEnum.LIKE_POST);
+                    notification.setRedirectURL("/user/posts/" + postId);
+                }
+                case COMMENT_POST -> {
+                    notification.setTargetId(postId);
+                    notification.setActionType(ActionEnum.COMMENT_POST);
+                    notification.setActionPerformedId(commentId);
+                    notification.setRedirectURL("/user/posts/" + postId);
+                }
+                case ADD_FRIEND -> {
+                    notification.setTargetId(sender.getId());
+                    notification.setActionType(ActionEnum.ADD_FRIEND);
+                    notification.setRedirectURL("/user/friends/requests");
+                }
+                case ACCEPT_FRIEND -> {
+                    notification.setTargetId(sender.getId());
+                    notification.setActionType(ActionEnum.ACCEPT_FRIEND);
+                    notification.setRedirectURL("/user/profile/" + sender.getProfile().getUsername());
+
+                    notificationRepository
+                            .findByTargetIdAndActionTypeAndRecipient(recipient.getId(), ActionEnum.ADD_FRIEND, sender.getId())
+                            .ifPresent(notificationRepository::delete);
+                }
             }
         }
 

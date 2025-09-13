@@ -16,4 +16,5 @@ public class UserResponse {
     private String status;
     private String role;
     private UserProfileResponse profile;
+    private Long lastOffline; // timestamp lần offline cuối
 }
