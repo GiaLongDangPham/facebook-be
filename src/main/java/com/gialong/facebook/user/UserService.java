@@ -42,14 +42,11 @@ public class UserService {
     }
 
     public void setUserOnline(UserResponse user) {
-        // Lưu cả object vào Redis (RedisTemplate sẽ serialize)
         redisService.hashSet(ONLINE_USERS_KEY, user.getId().toString(), user);
     }
 
     public void setUserOffline(UUID userId) {
         redisService.delete(ONLINE_USERS_KEY, userId.toString());
-
-        // Lưu thời điểm offline
         long now = System.currentTimeMillis();
         userRepository.findById(userId).ifPresent(user -> {
             user.setLastOffline(now);
