@@ -3,9 +3,9 @@ spring:
     name: facebook
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/facebook?createDatabaseIfNotExist=true
-    username: root
-    password: root
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,7 +20,7 @@ spring:
       port: 6379
 
 jwt:
-  secret-key: ${JWT-SECRET-KEY}
+  secret-key: ${JWT_SIGNER_KEY}
   expiration: 3600 # 30 phút
   refresh-expiration: 604800 # 7 ngày
 api:

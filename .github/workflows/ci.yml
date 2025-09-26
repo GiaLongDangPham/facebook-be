@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JWT-SECRET-KEY: test-secret
+      BREVO_API_KEY: dummy-api-key
 
     services:
       mysql:
