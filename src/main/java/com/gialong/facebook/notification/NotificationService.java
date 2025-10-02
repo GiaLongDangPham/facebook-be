@@ -21,8 +21,16 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendNotification(User recipient, User sender, UUID postId, UUID commentId, ActionEnum actionEnum) {
-        Optional<Notification> optionalNotification = notificationRepository
-                .findByTargetIdAndActionTypeAndRecipient(sender.getId(), actionEnum, recipient.getId());
+        Optional<Notification> optionalNotification;
+
+        if (actionEnum.equals(ActionEnum.LIKE_POST) || actionEnum.equals(ActionEnum.COMMENT_POST)){
+            optionalNotification = notificationRepository
+                    .findByTargetIdAndActionTypeAndRecipient(postId, actionEnum, recipient.getId());
+        }
+        else {
+            optionalNotification = notificationRepository
+                    .findByTargetIdAndActionTypeAndRecipient(sender.getId(), actionEnum, recipient.getId());
+        }
 
         Notification notification;
         if(optionalNotification.isPresent()) {
